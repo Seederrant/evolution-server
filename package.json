@@ -1,0 +1,9 @@
+{
+  "name": "evolution-server",
+  "version": "0.0.1",
+  "description": "Evolution server",
+  "dependencies": {
+    "express": "^4.6.1",
+    "socket.io": "^1.0.6"
+  }
+}
