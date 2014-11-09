@@ -2,66 +2,123 @@
 (function() {
   module.exports = function(io) {
     return {
-      phase: "Evolution",
-      deck: {
-        number: 40
-      },
-      players: [
+      games: [
         {
-          name: 'Edouard',
-          hand: [
+          currentPlayerId: 0,
+          phase: "Evolution",
+          deck: {
+            number: 40
+          },
+          players: [
             {
-              shortName: "intellect"
+              connected: false,
+              name: 'Edouard',
+              hand: [
+                {
+                  shortName: "intellect"
+                }, {
+                  shortName: "carnivorous"
+                }, {
+                  shortName: "vivaporous"
+                }, {
+                  shortName: "tailLoss"
+                }
+              ],
+              species: [
+                [], [
+                  {
+                    name: "intellect",
+                    shortName: "intellect"
+                  }, {
+                    name: "carnivorous",
+                    cost: 1,
+                    shortName: "intellect"
+                  }
+                ]
+              ]
             }, {
-              shortName: "carnivorous"
+              connected: false,
+              name: 'Jacob',
+              hand: [
+                {
+                  shortName: "intellect"
+                }, {
+                  shortName: "carnivorous"
+                }, {
+                  shortName: "tailLoss"
+                }
+              ],
+              species: [
+                [], [
+                  {
+                    name: "tailLoss",
+                    shortName: "tailLoss"
+                  }, {
+                    name: "vivaporous",
+                    cost: 1,
+                    shortName: "vivaporous"
+                  }
+                ]
+              ]
             }, {
-              shortName: "vivaporous"
-            }, {
-              shortName: "tailLoss"
+              connected: false,
+              name: 'Charlotte',
+              hand: [
+                {
+                  shortName: "carnivorous"
+                }, {
+                  shortName: "vivaporous"
+                }
+              ],
+              species: [
+                [], [
+                  {
+                    name: "tailLoss",
+                    shortName: "tailLoss"
+                  }
+                ]
+              ]
             }
-          ],
-          species: [
-            [], [
-              {
-                name: "intellect",
-                shortName: "intellect"
-              }, {
-                name: "carnivorous",
-                cost: 1,
-                shortName: "intellect"
-              }
-            ]
-          ]
-        }, {
-          name: 'Jacob',
-          cardNumber: 5,
-          species: [
-            [], [
-              {
-                name: "tailLoss",
-                shortName: "tailLoss"
-              }, {
-                name: "vivaporous",
-                cost: 1,
-                shortName: "vivaporous"
-              }
-            ]
-          ]
-        }, {
-          name: 'Charlotte',
-          cardNumber: 2,
-          species: [
-            [], [
-              {
-                name: "tailLoss",
-                shortName: "tailLoss"
-              }
-            ]
           ]
         }
       ],
+      getNewPlayerId: function(gameId) {
+        var i;
+        i = 0;
+        while (this.games[gameId].players[i].connected) {
+          i++;
+        }
+        return i;
+      },
+      filterGame: function(game, id) {
+        var copy, i, player, playerCopy, _i, _len, _ref;
+        copy = {
+          currentPlayerId: game.currentPlayerId,
+          phase: game.phase,
+          deck: game.deck,
+          players: []
+        };
+        _ref = game.players;
+        for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+          player = _ref[i];
+          if (id === i) {
+            copy.players.push(player);
+          } else {
+            playerCopy = {};
+            playerCopy.connected = player.connected;
+            playerCopy.name = player.name;
+            playerCopy.species = player.species;
+            playerCopy.cardNumber = player.hand.length;
+            copy.players.push(playerCopy);
+          }
+        }
+        return copy;
+      },
       areCompatible: function(card, specie) {
         return true;
+      },
+      nextPlayer: function(game) {
+        game.currentPlayerId = (++game.currentPlayerId) % game.players.length;
       }
     };
   };
