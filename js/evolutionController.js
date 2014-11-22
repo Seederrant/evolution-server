@@ -4,6 +4,7 @@
     return {
       games: [
         {
+          firstPlayer: 0,
           currentPlayerId: 0,
           phase: "Evolution",
           deck: {
@@ -25,16 +26,22 @@
                 }
               ],
               species: [
-                [], [
-                  {
-                    name: "intellect",
-                    shortName: "intellect"
-                  }, {
-                    name: "carnivorous",
-                    cost: 1,
-                    shortName: "intellect"
-                  }
-                ]
+                {
+                  traits: [],
+                  foodEaten: 0
+                }, {
+                  traits: [
+                    {
+                      name: "intellect",
+                      shortName: "intellect"
+                    }, {
+                      name: "carnivorous",
+                      cost: 1,
+                      shortName: "intellect"
+                    }
+                  ],
+                  foodEaten: 0
+                }
               ]
             }, {
               connected: false,
@@ -49,34 +56,22 @@
                 }
               ],
               species: [
-                [], [
-                  {
-                    name: "tailLoss",
-                    shortName: "tailLoss"
-                  }, {
-                    name: "vivaporous",
-                    cost: 1,
-                    shortName: "vivaporous"
-                  }
-                ]
-              ]
-            }, {
-              connected: false,
-              name: 'Charlotte',
-              hand: [
                 {
-                  shortName: "carnivorous"
+                  traits: [],
+                  foodEaten: 0
                 }, {
-                  shortName: "vivaporous"
+                  traits: [
+                    {
+                      name: "tailLoss",
+                      shortName: "tailLoss"
+                    }, {
+                      name: "vivaporous",
+                      cost: 1,
+                      shortName: "vivaporous"
+                    }
+                  ],
+                  foodEaten: 0
                 }
-              ],
-              species: [
-                [], [
-                  {
-                    name: "tailLoss",
-                    shortName: "tailLoss"
-                  }
-                ]
               ]
             }
           ]
@@ -113,12 +108,6 @@
           }
         }
         return copy;
-      },
-      areCompatible: function(card, specie) {
-        return true;
-      },
-      nextPlayer: function(game) {
-        game.currentPlayerId = (++game.currentPlayerId) % game.players.length;
       }
     };
   };

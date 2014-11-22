@@ -1,5 +1,6 @@
 module.exports = (io) ->
 	games: [
+		firstPlayer: 0 				# the first player to play in the phase, increments when switching to Evolution phase
 		currentPlayerId: 0
 		phase: "Evolution"
 		deck: { number: 40 }
@@ -8,20 +9,38 @@ module.exports = (io) ->
 				connected: false
 				name: 'Edouard', 
 				hand: [ { shortName:"intellect" }, { shortName:"carnivorous" }, { shortName:"vivaporous" }, { shortName:"tailLoss"} ],
-				species: [ [], [ { name:"intellect", shortName:"intellect" }, { name:"carnivorous", cost:1, shortName:"intellect"} ] ]
+				species: [
+					{
+						traits: [],
+						foodEaten: 0
+					}
+					{
+						traits: [ { name:"intellect", shortName:"intellect" }, { name:"carnivorous", cost:1, shortName:"intellect"} ],
+						foodEaten: 0
+					}
+				]
 			},
 			{
 				connected: false
 				name: 'Jacob', 
 				hand: [ { shortName:"intellect" }, { shortName:"carnivorous" }, { shortName:"tailLoss"} ],
-				species: [ [], [ { name:"tailLoss", shortName:"tailLoss" }, { name:"vivaporous", cost:1, shortName:"vivaporous"} ] ]
+				species: [
+					{
+						traits: [],
+						foodEaten: 0
+					}
+					{
+						traits: [ { name:"tailLoss", shortName:"tailLoss" }, { name:"vivaporous", cost:1, shortName:"vivaporous"} ]
+						foodEaten: 0
+					}
+				]
 			},
-			{
-				connected: false
-				name: 'Charlotte',
-				hand: [ { shortName:"carnivorous" }, { shortName:"vivaporous" } ],
-				species: [ [], [ { name:"tailLoss", shortName:"tailLoss" } ] ]
-			} 
+			# {
+			# 	connected: false
+			# 	name: 'Charlotte',
+			# 	hand: [ { shortName:"carnivorous" }, { shortName:"vivaporous" } ],
+			# 	species: [ [], [ { name:"tailLoss", shortName:"tailLoss" } ] ]
+			# } 
 		]
 	]
 
@@ -49,9 +68,3 @@ module.exports = (io) ->
 				copy.players.push(playerCopy)
 		return copy
 
-	areCompatible: (card, specie)->
-		return true
-
-	nextPlayer: (game)->
-		game.currentPlayerId = (++game.currentPlayerId)%game.players.length
-		return
