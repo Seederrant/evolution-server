@@ -4,9 +4,9 @@
     return {
       games: [
         {
-          firstPlayer: 0,
+          firstPlayerId: 0,
           currentPlayerId: 0,
-          phase: "Evolution",
+          phaseIndex: 0,
           deck: {
             number: 40
           },
@@ -37,7 +37,7 @@
                     }, {
                       name: "carnivorous",
                       cost: 1,
-                      shortName: "intellect"
+                      shortName: "carnivorous"
                     }
                   ],
                   foodEaten: 0
@@ -89,8 +89,9 @@
         var copy, i, player, playerCopy, _i, _len, _ref;
         copy = {
           currentPlayerId: game.currentPlayerId,
-          phase: game.phase,
+          phaseIndex: game.phaseIndex,
           deck: game.deck,
+          firstPlayerId: game.firstPlayerId,
           players: []
         };
         _ref = game.players;

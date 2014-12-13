@@ -1,10 +1,7 @@
 class EvolutionCommons
 
 	constructor: (@game)->
-		@phases =
-			"Evolution": 0
-			"Food": 1
-			"Extinction": 2
+		@phases = ["Evolution", "Food", "Extinction"]
 		return
 
 	isPlayerTurn: (playerId)->
@@ -14,18 +11,25 @@ class EvolutionCommons
 		return @game.players[ @currentPlayerId() ]
 
 	player: (index)->
-		return @players()[index]
+		return @game.players[index]
 
 	currentPlayerId: ()->
 		return @game.currentPlayerId
 	
+	foodAmountRequired: (specie)->
+		expensiveTraits = ['carnivorous', 'high-body-weight', 'parasite', 'co-parasite', 'vivaporous' ]
+		cost = 1
+		for trait in specie.traits
+			if trait.shortName in expensiveTraits
+				cost += 1
+			if trait.shortName == 'parasite'
+				cost += 1
+		return cost
+
 	isFed: (specie)->
 		return specie.foodEaten == @foodAmountRequired(specie)
 
-	players: ()->
-		return @game.players
-
-	isCompatibleEvolution: (specie, card)->
+	checkCompatibleEvolution: (specie, card)->
 		return true
 
 	checkCompatibleFood: (specie)->
@@ -34,26 +38,44 @@ class EvolutionCommons
 		# - has special trait: grazing, eat and be fat...
 		# - is a carnivorous and has not eaten
 		
-		if not isFed(specie)
+		if not @isFed(specie)
 			specie.compatible = true
+		else
+			specie.compatible = false
 
-		fullyFed = false
+		finished = false
 
 		for trait in specie.traits
 			if trait.shortName == 'grazing' and not trait.used
 				trait.compatible = true
 				break
-			if trait.shortName == 'carnivorous' and not trait.used and not isFed(specie)
+			if trait.shortName == 'carnivorous' and not trait.used and not @isFed(specie)
 				trait.compatible = true
 				break
-			if trait.shortName == 'fatTissue' and not trait.used and isFed(specie)
+			if trait.shortName == 'fatTissue' and not trait.used and @isFed(specie)
 				trait.compatible = true
 				break
 
-			fullyFed = fullyFed or not trait.compatible
+			finished = finished or not trait.compatible
 
-		specie.fullyFed = fullyFed
+		specie.finished = finished
 		return
+
+	checkPlayerFinishedFood: ()->
+		player = @currentPlayer()
+		for specie in player.species
+			if not specie.finished
+				return
+		player.finished = true
+		return
+
+	canPassFood: ()->
+		player = @currentPlayer()
+		if @game.foodAmount==0 then return true
+		for specie in player.species
+			if not @isFed(specie)
+				return false
+		return true
 
 	card: (cardIndex)->
 		return @currentPlayer().hand[cardIndex]
@@ -64,49 +86,57 @@ class EvolutionCommons
 	feedSpecie: (specieIndex, playerId = @currentPlayerId())->
 		specie = @specie(specieIndex, playerId)
 		specie.foodEaten++
-		@game.foodAmount-- # check
+		@game.foodAmount--
 		@checkCompatibleFood(specie)
-		return
+		@checkPlayerFinishedFood()
+		return @nextPlayer()
 
+	# pass to next player
+	# play trait on specie
+	# set player.finished if finished
 	addTrait: (specieIndex, cardIndex)->
 		player = @currentPlayer()
 		card = player.hand.splice(cardIndex, 1)[0]
 		if player.hand.length == 0
 			player.finished = true
 		@specie(specieIndex).traits.push(card)
-		return
+		return @nextPlayer()
 
-	passPlayerEvolution: ()->
-		$scope.players[data.previousPlayerId].finished = true
-		next
-		return
+	# pass to next player
+	# set player.finished
+	playerPassedEvolution: ()->
+		player = @currentPlayer()
+		player.finished = true
+		return @nextPlayer()
 
 	# check if the phase is finished (all players have finished) and return true if we go to next phase
 	# set currentPlayerId
 	nextPlayer: ()->
 		i = 0
-		while true
-			@game.currentPlayerId = (++@game.currentPlayerId)%@game.players.length
+		players = @game.players
+		while i < players.length
+			@game.currentPlayerId = (@game.currentPlayerId+1)%players.length
+			if not @player(@game.currentPlayerId).finished
+				break
 			i++
-			break unless not @player(@game.currentPlayerId).finished and i == @players.length 
-		if i == @players.length
-			nextPhase()
+		console.log @game.currentPlayerId
+		if i == players.length
+			@game.currentPlayerId = @game.firstPlayerId
+			@nextPhase()
 			return true
 		return false
 
+	phase: ()->
+		return @phases[@game.phaseIndex]
+
 	nextPhase: ()->
-		nextPhaseId = (@phases[@game.phase]+1)%@phases.length
-		for name, phaseId of @phases
-			if phaseId == nextPhaseId
-				@game.phase == name
+		@game.phaseIndex = (@game.phaseIndex+1)%@phases.length
 		for player in @game.players
 			player.finished = false
-		if @game.phase == "Evolution"
-			@game.firstPlayer = (++@game.firstPlayer)%@game.players.length
-			@game.currentPlayerId = @game.firstPlayer
+		if @phase() == "Evolution"
+			@game.firstPlayerId = (@game.firstPlayerId+1)%@game.players.length
+			@game.currentPlayerId = @game.firstPlayerId
 		return
-
-
 
 module?.exports = EvolutionCommons
 

@@ -1,8 +1,8 @@
 module.exports = (io) ->
 	games: [
-		firstPlayer: 0 				# the first player to play in the phase, increments when switching to Evolution phase
+		firstPlayerId: 0 				# the first player to play in the phase, increments when switching to Evolution phase
 		currentPlayerId: 0
-		phase: "Evolution"
+		phaseIndex: 0
 		deck: { number: 40 }
 		players: [ 
 			{
@@ -15,7 +15,7 @@ module.exports = (io) ->
 						foodEaten: 0
 					}
 					{
-						traits: [ { name:"intellect", shortName:"intellect" }, { name:"carnivorous", cost:1, shortName:"intellect"} ],
+						traits: [ { name:"intellect", shortName:"intellect" }, { name:"carnivorous", cost:1, shortName:"carnivorous"} ],
 						foodEaten: 0
 					}
 				]
@@ -53,8 +53,9 @@ module.exports = (io) ->
 	filterGame: (game, id)->
 		copy = 
 			currentPlayerId: game.currentPlayerId
-			phase: game.phase
+			phaseIndex: game.phaseIndex
 			deck: game.deck
+			firstPlayerId: game.firstPlayerId
 			players: []
 		for player, i in game.players
 			if id==i
