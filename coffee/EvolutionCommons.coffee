@@ -184,25 +184,25 @@ class EvolutionCommons
 			tailLoss: {}
 			communication: {}
 			grazing: {}
-			highBodyWeight: {}
+			highBodyWeight: { cost: 1 }
 			hibernationAbility: {}
 			poisonous: {}
 			cooperation: {}
 			burrowing: {}
 			camouflage: {}
 			sharpVision: {}
-			carnivorous: {}
+			carnivorous: { cost: 1 }
 			fatTissue: {}
-			parasite: {}
+			parasite: { cost: 2 }
 			shell: {}
-			intellect: {}
+			intellect: { cost: 1 }
 			anglerFish: {}
 			specializationA: {}
 			specializationB: {}
-			trematode: {}
+			trematode: { cost: 1 }
 			metamorphosis: {}
 			inkCloud: {}
-			vivaporous: {}
+			vivaporous: { cost: 1 }
 			ambushHunting: {}
 			flight: {}
 		}
@@ -221,13 +221,9 @@ class EvolutionCommons
 		return @game.currentPlayerId
 	
 	foodAmountRequired: (specie)->
-		expensiveTraits = ['carnivorous', 'high-body-weight', 'parasite', 'trematode', 'vivaporous' ]
 		cost = 1
 		for trait in specie.traits
-			if trait.shortName in expensiveTraits
-				cost += 1
-			if trait.shortName == 'parasite'
-				cost += 1
+			if trait.cost? then cost += trait.cost
 		return cost
 
 	isFed: (specie)->
@@ -307,9 +303,9 @@ class EvolutionCommons
 		return
 
 	# called when player plays client side, and on server (on "end turn evolution"), but not when others clients receive result (not on "next player evolution") 
-	addSpecie: (cardIndex)->
+	addSpecie: (selectedCard)->
 		player = @currentPlayer()
-		card = player.hand.splice(cardIndex, 1)[0]
+		card = player.hand.splice(selectedCard.cardIndex, 1)[0]
 		@createSpecie(player)
 		if player.hand.length == 0
 			player.finished = true
@@ -318,12 +314,12 @@ class EvolutionCommons
 	# pass to next player
 	# play trait on specie
 	# set player.finished if finished
-	addTrait: (specieIndex, cardIndex)->
+	addTrait: (specieIndex, selectedCard)->
 		player = @currentPlayer()
-		card = player.hand.splice(cardIndex, 1)[0]
+		trait = player.hand.splice(selectedCard.cardIndex, 1)[0][selectedCard.traitIndex]
 		if player.hand.length == 0
 			player.finished = true
-		@specie(specieIndex).traits.push(card)
+		@specie(specieIndex).traits.push( { shortName: trait } )
 		return @nextPlayer()
 
 	# pass to next player

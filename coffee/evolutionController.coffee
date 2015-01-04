@@ -1,49 +1,31 @@
 module.exports = (io) ->
 	games: [
-		firstPlayerId: 0 				# the first player to play in the phase, increments when switching to Evolution phase
-		currentPlayerId: 0
-		phaseIndex: 0
-		deck: { number: 40 }
-		players: [ 
-			{
-				connected: false
-				socketId: null
-				name: 'Edouard', 
-				hand: [ { shortName:"intellect" }, { shortName:"carnivorous", cost: 1 }, { shortName:"vivaporous", cost: 1 }, { shortName:"tailLoss"} ],
-				species: [
-					{
-						traits: [],
-						foodEaten: 0
-					}
-					{
-						traits: [ { name:"intellect", shortName:"intellect" }, { name:"carnivorous", cost: 1, shortName:"carnivorous"} ],
-						foodEaten: 0
-					}
-				]
-			},
-			{
-				connected: false
-				socketId: null
-				name: 'Jacob', 
-				hand: [ { shortName:"intellect" }, { shortName:"carnivorous", cost: 1 }, { shortName:"tailLoss"} ],
-				species: [
-					{
-						traits: [],
-						foodEaten: 0
-					}
-					{
-						traits: [ { name:"tailLoss", shortName:"tailLoss" }, { name:"vivaporous", cost:1, shortName:"vivaporous"} ]
-						foodEaten: 0
-					}
-				]
-			},
+		# firstPlayerId: 0 				# the first player to play in the phase, increments when switching to Evolution phase
+		# currentPlayerId: 0
+		# phaseIndex: 0
+		# deck: { cards: [] }
+		# players: [ 
+		# 	{
+		# 		connected: false
+		# 		socketId: null
+		# 		name: 'Edouard', 
+		# 		hand: [],
+		# 		species: []
+		# 	},
+		# 	{
+		# 		connected: false
+		# 		socketId: null
+		# 		name: 'Jacob', 
+		# 		hand: [],
+		# 		species: []
+		# 	},
 			# {
 			# 	connected: false
 			# 	name: 'Charlotte',
 			# 	hand: [ { shortName:"carnivorous" }, { shortName:"vivaporous" } ],
 			# 	species: [ [], [ { name:"tailLoss", shortName:"tailLoss" } ] ]
 			# } 
-		]
+		# ]
 	]
 
 	getNewPlayerId: (gameId)->
@@ -56,7 +38,7 @@ module.exports = (io) ->
 		copy = 
 			currentPlayerId: game.currentPlayerId
 			phaseIndex: game.phaseIndex
-			deck: game.deck
+			cardNumberInDeck: game.deck.number
 			foodAmount: game.foodAmount
 			firstPlayerId: game.firstPlayerId
 			players: []

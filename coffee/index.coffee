@@ -8,11 +8,55 @@ gameId = 0
 clone = (a)->
 	return JSON.parse(JSON.stringify(a))
 
-gameInit = clone(evolution.games[0])
+createGame = ()->
+	evolution.games[0] = {}
+	game = evolution.games[0]
+	game.ec = new EvolutionCommons(game)
 
-evolution.games[0].ec = new EvolutionCommons(evolution.games[0])
+	game.firstPlayerId = 0
+	game.currentPlayerId = 0
+	game.phaseIndex = 0
+	game.deck = cards: []
+
+	#init deck wit cards
+	cards = game.deck.cards
+
+	for card in game.ec.cards
+		for i in [1 .. card.number]
+			cards.push( card.traits )
+
+	shuffle = (o) -> #v1.0
+		j = undefined
+		x = undefined
+		i = o.length
+
+		while i
+			j = Math.floor(Math.random() * i)
+			x = o[--i]
+			o[i] = o[j]
+			o[j] = x
+		return o
+
+	shuffle( cards )
+
+	game.players = []
+	game.players.push( name: 'Edouard' )
+	game.players.push( name: 'Jacob' )
+
+	for player in game.players
+		player.hand = []
+		for i in [1 .. 6]
+			player.hand.push(cards.pop())
+		player.species = []
+		player.connected = false
+		player.socketId =  null
+	return
+
+createGame()
+
+# gameInit = clone(evolution.games[0])
+
 socketData = {}
-
 
 app.get "/", (req, res) ->
 	res.send { connected: true }
@@ -83,13 +127,12 @@ io.on "connection", (socket) ->
 		currentPlayer = game.firstPlayerId
 		
 		# deal the new cards, one by one
-		while nCardsDealed<nCardsRequired and game.deck.number>0
+		while nCardsDealed<nCardsRequired and game.deck.cards.length>0
 			player = game.players[currentPlayer]
 			if player.nCardsRequired>0
-				player.hand.push( random(ec().cards) )
+				player.hand.push( game.deck.cards.pop() )
 				player.nCardsRequired--
 				nCardsDealed++
-				game.deck.number--
 			currentPlayer = (currentPlayer+1)%game.players.length
 
 		# send an array *playersCardNumber* giving the new number of card of the players
@@ -99,7 +142,7 @@ io.on "connection", (socket) ->
 		
 		# send specific data (cards) to each player
 		for player in game.players
-			action = { hand: player.hand, playersCardNumber: playersCardNumber, deckCards: game.deck.number }
+			action = { hand: player.hand, playersCardNumber: playersCardNumber, cardNumberInDeck: game.deck.cards.length }
 			socket.server.to(player.socketId).emit "phase evolution", action
 		return
 
@@ -127,15 +170,15 @@ io.on "connection", (socket) ->
 
 		valid = true
 		if action.addSpecie
-			nextPhase = ec().addSpecie(action.cardIndex)
+			nextPhase = ec().addSpecie(action.selectedCard)
 		else
 			specie = ec().specie( action.specieIndex )
-			card = ec().card( action.cardIndex )
-			action.card = card
-			ec().checkCompatibleEvolution( specie, card )
+			trait = ec().card( action.selectedCard.cardIndex )[action.selectedCard.traitIndex]
+			action.trait = trait
+			ec().checkCompatibleEvolution( specie, trait )
 			
 			if specie.compatible
-				nextPhase = ec().addTrait(action.specieIndex, action.cardIndex)	
+				nextPhase = ec().addTrait(action.specieIndex, action.selectedCard)	
 			else
 				action.message = "Error: cards are not compatible."
 				socket.emit "evolution error", action
@@ -203,8 +246,7 @@ io.on "connection", (socket) ->
 
 	socket.on "restart game", ()->
 		console.log "restart game"
-		evolution.games[0] = clone(gameInit)
-		evolution.games[0].ec = new EvolutionCommons(evolution.games[0])
+		createGame()
 		
 		socket.to(sData().room).emit "evolution connect"
 		socket.emit "evolution connect"
