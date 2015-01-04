@@ -13,14 +13,17 @@
           players: [
             {
               connected: false,
+              socketId: null,
               name: 'Edouard',
               hand: [
                 {
                   shortName: "intellect"
                 }, {
-                  shortName: "carnivorous"
+                  shortName: "carnivorous",
+                  cost: 1
                 }, {
-                  shortName: "vivaporous"
+                  shortName: "vivaporous",
+                  cost: 1
                 }, {
                   shortName: "tailLoss"
                 }
@@ -45,12 +48,14 @@
               ]
             }, {
               connected: false,
+              socketId: null,
               name: 'Jacob',
               hand: [
                 {
                   shortName: "intellect"
                 }, {
-                  shortName: "carnivorous"
+                  shortName: "carnivorous",
+                  cost: 1
                 }, {
                   shortName: "tailLoss"
                 }
@@ -91,6 +96,7 @@
           currentPlayerId: game.currentPlayerId,
           phaseIndex: game.phaseIndex,
           deck: game.deck,
+          foodAmount: game.foodAmount,
           firstPlayerId: game.firstPlayerId,
           players: []
         };

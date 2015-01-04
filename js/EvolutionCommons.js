@@ -6,7 +6,161 @@
   EvolutionCommons = (function() {
     function EvolutionCommons(game) {
       this.game = game;
-      this.phases = ["Evolution", "Food", "Extinction"];
+      this.phases = ["Evolution", "Food"];
+      this.cards = [
+        {
+          number: 8,
+          traits: ['swimming']
+        }, {
+          number: 2,
+          traits: ['swimming', 'ambushHunting']
+        }, {
+          number: 2,
+          traits: ['swimming', 'vivaporous']
+        }, {
+          number: 4,
+          traits: ['carnivorous', 'poisonous']
+        }, {
+          number: 4,
+          traits: ['carnivorous', 'parasite']
+        }, {
+          number: 2,
+          traits: ['carnivorous', 'metamorphosis']
+        }, {
+          number: 2,
+          traits: ['carnivorous', 'flight']
+        }, {
+          number: 4,
+          traits: ['carnivorous', 'communication']
+        }, {
+          number: 4,
+          traits: ['carnivorous', 'highBodyWeight']
+        }, {
+          number: 4,
+          traits: ['carnivorous', 'cooperation']
+        }, {
+          number: 4,
+          traits: ['anglerFish']
+        }, {
+          number: 4,
+          traits: ['carnivorous', 'hibernationAbility']
+        }, {
+          number: 2,
+          traits: ['fatTissue', 'trematode']
+        }, {
+          number: 4,
+          traits: ['fatTissue', 'camouflage']
+        }, {
+          number: 4,
+          traits: ['fatTissue', 'parasite']
+        }, {
+          number: 4,
+          traits: ['fatTissue', 'cooperation']
+        }, {
+          number: 4,
+          traits: ['fatTissue', 'burrowing']
+        }, {
+          number: 2,
+          traits: ['fatTissue', 'intellect']
+        }, {
+          number: 4,
+          traits: ['fatTissue', 'highBodyWeight']
+        }, {
+          number: 4,
+          traits: ['fatTissue', 'sharpVision']
+        }, {
+          number: 4,
+          traits: ['fatTissue', 'grazing']
+        }, {
+          number: 2,
+          traits: ['specializationA', 'flight']
+        }, {
+          number: 2,
+          traits: ['specializationA', 'metamorphosis']
+        }, {
+          number: 2,
+          traits: ['specializationA', 'intellect']
+        }, {
+          number: 2,
+          traits: ['specializationB', 'flight']
+        }, {
+          number: 2,
+          traits: ['specializationB', 'vivaporous']
+        }, {
+          number: 2,
+          traits: ['specializationB', 'ambushHunting']
+        }, {
+          number: 4,
+          traits: ['shell']
+        }, {
+          number: 4,
+          traits: ['inkCloud']
+        }, {
+          number: 4,
+          traits: ['scavenger']
+        }, {
+          number: 4,
+          traits: ['piracy']
+        }, {
+          number: 4,
+          traits: ['running']
+        }, {
+          number: 4,
+          traits: ['tailLoss']
+        }, {
+          number: 4,
+          traits: ['mimicry']
+        }, {
+          number: 4,
+          traits: ['symbiosis']
+        }, {
+          number: 4,
+          traits: ['trematode', 'cooperation']
+        }, {
+          number: 4,
+          traits: ['trematode', 'communication']
+        }
+      ];
+      this.traits = {
+        swimming: {
+          canBeEatenBy: function(specie) {
+            return specie.traits.swimming != null;
+          }
+        },
+        running: {
+          attackSuccesful: function(specie) {
+            return Math.random() > 0.5;
+          }
+        },
+        mimicry: {},
+        scavenger: {},
+        symbiosis: {},
+        piracy: {},
+        tailLoss: {},
+        communication: {},
+        grazing: {},
+        highBodyWeight: {},
+        hibernationAbility: {},
+        poisonous: {},
+        cooperation: {},
+        burrowing: {},
+        camouflage: {},
+        sharpVision: {},
+        carnivorous: {},
+        fatTissue: {},
+        parasite: {},
+        shell: {},
+        intellect: {},
+        anglerFish: {},
+        specializationA: {},
+        specializationB: {},
+        trematode: {},
+        metamorphosis: {},
+        inkCloud: {},
+        vivaporous: {},
+        ambushHunting: {},
+        flight: {}
+      };
       return;
     }
 
@@ -28,7 +182,7 @@
 
     EvolutionCommons.prototype.foodAmountRequired = function(specie) {
       var cost, expensiveTraits, trait, _i, _len, _ref, _ref1;
-      expensiveTraits = ['carnivorous', 'high-body-weight', 'parasite', 'co-parasite', 'vivaporous'];
+      expensiveTraits = ['carnivorous', 'high-body-weight', 'parasite', 'trematode', 'vivaporous'];
       cost = 1;
       _ref = specie.traits;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -47,21 +201,23 @@
       return specie.foodEaten === this.foodAmountRequired(specie);
     };
 
-    EvolutionCommons.prototype.checkCompatibleEvolution = function(specie, card) {
-      return true;
+    EvolutionCommons.prototype.checkCompatibleEvolution = function(specie, card, addSpecie) {
+      specie.compatible = true;
     };
 
     EvolutionCommons.prototype.checkCompatibleFood = function(specie) {
-      var finished, trait, _i, _len, _ref;
-      if (!this.isFed(specie)) {
+      var finished, specieFed, trait, _i, _len, _ref;
+      specieFed = this.isFed(specie);
+      if (!specieFed && this.game.foodAmount > 0) {
         specie.compatible = true;
       } else {
         specie.compatible = false;
       }
-      finished = false;
+      finished = specieFed || this.game.foodAmount === 0;
       _ref = specie.traits;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         trait = _ref[_i];
+        trait.compatible = false;
         if (trait.shortName === 'grazing' && !trait.used) {
           trait.compatible = true;
           break;
@@ -74,7 +230,7 @@
           trait.compatible = true;
           break;
         }
-        finished = finished || !trait.compatible;
+        finished = finished && !trait.compatible;
       }
       specie.finished = finished;
     };
@@ -95,6 +251,9 @@
     EvolutionCommons.prototype.canPassFood = function() {
       var player, specie, _i, _len, _ref;
       player = this.currentPlayer();
+      if (player.finished) {
+        return false;
+      }
       if (this.game.foodAmount === 0) {
         return true;
       }
@@ -132,6 +291,27 @@
       return this.nextPlayer();
     };
 
+    EvolutionCommons.prototype.createSpecie = function(player) {
+      if (player == null) {
+        player = this.currentPlayer();
+      }
+      player.species.push({
+        traits: [],
+        foodEaten: 0
+      });
+    };
+
+    EvolutionCommons.prototype.addSpecie = function(cardIndex) {
+      var card, player;
+      player = this.currentPlayer();
+      card = player.hand.splice(cardIndex, 1)[0];
+      this.createSpecie(player);
+      if (player.hand.length === 0) {
+        player.finished = true;
+      }
+      return this.nextPlayer();
+    };
+
     EvolutionCommons.prototype.addTrait = function(specieIndex, cardIndex) {
       var card, player;
       player = this.currentPlayer();
@@ -144,6 +324,13 @@
     };
 
     EvolutionCommons.prototype.playerPassedEvolution = function() {
+      var player;
+      player = this.currentPlayer();
+      player.finished = true;
+      return this.nextPlayer();
+    };
+
+    EvolutionCommons.prototype.playerPassedFood = function() {
       var player;
       player = this.currentPlayer();
       player.finished = true;
@@ -174,6 +361,38 @@
       return this.phases[this.game.phaseIndex];
     };
 
+    EvolutionCommons.prototype.extinctSpecies = function() {
+      var player, specie, _i, _j, _len, _len1, _ref, _ref1;
+      _ref = this.game.players;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        player = _ref[_i];
+        _ref1 = player.species;
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          specie = _ref1[_j];
+          if (!this.isFed(specie)) {
+            specie.extinct = true;
+          }
+        }
+      }
+      this.phaseIndex = 0;
+    };
+
+    EvolutionCommons.prototype.clearExtinctedSpecies = function() {
+      var i, player, specie, _i, _len, _ref;
+      _ref = this.game.players;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        player = _ref[_i];
+        i = player.species.length - 1;
+        while (i >= 0) {
+          specie = player.species[i];
+          if (specie.extinct) {
+            player.species.splice(i, 1);
+          }
+          i--;
+        }
+      }
+    };
+
     EvolutionCommons.prototype.nextPhase = function() {
       var player, _i, _len, _ref;
       this.game.phaseIndex = (this.game.phaseIndex + 1) % this.phases.length;
@@ -182,9 +401,12 @@
         player = _ref[_i];
         player.finished = false;
       }
-      if (this.phase() === "Evolution") {
-        this.game.firstPlayerId = (this.game.firstPlayerId + 1) % this.game.players.length;
-        this.game.currentPlayerId = this.game.firstPlayerId;
+      switch (this.phase()) {
+        case "Evolution":
+          this.extinctSpecies();
+          this.game.foodAmount = null;
+          this.game.firstPlayerId = (this.game.firstPlayerId + 1) % this.game.players.length;
+          this.game.currentPlayerId = this.game.firstPlayerId;
       }
     };
 

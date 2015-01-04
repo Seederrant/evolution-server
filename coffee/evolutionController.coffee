@@ -7,23 +7,25 @@ module.exports = (io) ->
 		players: [ 
 			{
 				connected: false
+				socketId: null
 				name: 'Edouard', 
-				hand: [ { shortName:"intellect" }, { shortName:"carnivorous" }, { shortName:"vivaporous" }, { shortName:"tailLoss"} ],
+				hand: [ { shortName:"intellect" }, { shortName:"carnivorous", cost: 1 }, { shortName:"vivaporous", cost: 1 }, { shortName:"tailLoss"} ],
 				species: [
 					{
 						traits: [],
 						foodEaten: 0
 					}
 					{
-						traits: [ { name:"intellect", shortName:"intellect" }, { name:"carnivorous", cost:1, shortName:"carnivorous"} ],
+						traits: [ { name:"intellect", shortName:"intellect" }, { name:"carnivorous", cost: 1, shortName:"carnivorous"} ],
 						foodEaten: 0
 					}
 				]
 			},
 			{
 				connected: false
+				socketId: null
 				name: 'Jacob', 
-				hand: [ { shortName:"intellect" }, { shortName:"carnivorous" }, { shortName:"tailLoss"} ],
+				hand: [ { shortName:"intellect" }, { shortName:"carnivorous", cost: 1 }, { shortName:"tailLoss"} ],
 				species: [
 					{
 						traits: [],
@@ -55,8 +57,10 @@ module.exports = (io) ->
 			currentPlayerId: game.currentPlayerId
 			phaseIndex: game.phaseIndex
 			deck: game.deck
+			foodAmount: game.foodAmount
 			firstPlayerId: game.firstPlayerId
 			players: []
+			
 		for player, i in game.players
 			if id==i
 				copy.players.push(player)

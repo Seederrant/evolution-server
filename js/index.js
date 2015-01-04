@@ -31,7 +31,7 @@
   });
 
   io.on("connection", function(socket) {
-    var ec, fakeTurn, game, goToFoodPhase, sData, validState;
+    var ec, fakeTurn, game, goToExtinctionAndEvolutionPhase, goToFoodPhase, sData, validState;
     console.log("a user connected");
     sData = function() {
       return socketData[socket.id];
@@ -78,8 +78,51 @@
         case 4:
           action.foodAmount = Math.ceil(Math.random() * 6) * Math.ceil(Math.random() * 6) + 2;
       }
+      game.foodAmount = action.foodAmount;
       socket.to(sData().room).emit("phase food", action);
       socket.emit("phase food", action);
+    };
+    goToExtinctionAndEvolutionPhase = function(socket, game) {
+      var action, currentPlayer, nCardsDealed, nCardsRequired, player, playersCardNumber, random, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
+      random = function(array) {
+        return array[Math.floor(Math.random() * array.length)];
+      };
+      ec().clearExtinctedSpecies();
+      nCardsRequired = 0;
+      _ref = game.players;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        player = _ref[_i];
+        player.nCardsRequired = player.species.length + 1;
+        nCardsRequired += player.nCardsRequired;
+      }
+      nCardsDealed = 0;
+      currentPlayer = game.firstPlayerId;
+      while (nCardsDealed < nCardsRequired && game.deck.number > 0) {
+        player = game.players[currentPlayer];
+        if (player.nCardsRequired > 0) {
+          player.hand.push(random(ec().cards));
+          player.nCardsRequired--;
+          nCardsDealed++;
+          game.deck.number--;
+        }
+        currentPlayer = (currentPlayer + 1) % game.players.length;
+      }
+      playersCardNumber = [];
+      _ref1 = game.players;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        player = _ref1[_j];
+        playersCardNumber.push(player.hand.length);
+      }
+      _ref2 = game.players;
+      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+        player = _ref2[_k];
+        action = {
+          hand: player.hand,
+          playersCardNumber: playersCardNumber,
+          deckCards: game.deck.number
+        };
+        socket.server.to(player.socketId).emit("phase evolution", action);
+      }
     };
     socket.on('disconnect', function() {
       var _ref, _ref1;
@@ -105,23 +148,33 @@
       }
     });
     socket.on("end turn evolution", function(action) {
-      var nextPhase, player;
+      var card, nextPhase, specie, valid;
       if (!validState("Evolution")) {
         return;
       }
       console.log("end turn evolution: ");
       console.log(action);
-      if (ec().checkCompatibleEvolution(action.specieIndex, action.cardIndex)) {
-        player = ec().currentPlayer();
-        action.card = player.hand[action.cardIndex];
-        nextPhase = ec().addTrait(action.specieIndex, action.cardIndex);
+      valid = true;
+      if (action.addSpecie) {
+        nextPhase = ec().addSpecie(action.cardIndex);
+      } else {
+        specie = ec().specie(action.specieIndex);
+        card = ec().card(action.cardIndex);
+        action.card = card;
+        ec().checkCompatibleEvolution(specie, card);
+        if (specie.compatible) {
+          nextPhase = ec().addTrait(action.specieIndex, action.cardIndex);
+        } else {
+          action.message = "Error: cards are not compatible.";
+          socket.emit("evolution error", action);
+          valid = false;
+        }
+      }
+      if (valid) {
         socket.to(sData().room).emit("next player evolution", action);
         if (nextPhase) {
           goToFoodPhase(socket, game());
         }
-      } else {
-        action.message = "Error: cards are not compatible.";
-        socket.emit("evolution error", action);
       }
     });
     socket.on("end turn food", function(action) {
@@ -135,11 +188,23 @@
         nextPhase = ec().feedSpecie(action.specieIndex);
         socket.to(sData().room).emit("next player food", action);
         if (nextPhase) {
-          goToExtinctionPhase(socket, game());
+          goToExtinctionAndEvolutionPhase(socket, game());
         }
       } else {
         action.message = "Error: Specie is fed.";
         socket.emit("evolution error", action);
+      }
+    });
+    socket.on("pass phase food", function() {
+      var nextPhase;
+      if (!validState("Evolution")) {
+        return;
+      }
+      nextPhase = ec().playerPassedFood();
+      socket.to(sData().room).emit("player passed food");
+      socket.emit("player passed food");
+      if (nextPhase) {
+        goToExtinctionAndEvolutionPhase(socket, game());
       }
     });
     socket.on("load game", function(data) {
@@ -166,6 +231,7 @@
       socket.join(sData().room);
       console.log("load game " + data.gameId + " for player: " + data.playerId);
       sData().game = evolution.games[sData().gameId];
+      ec().player(sData().playerId).socketId = socket.id;
       filteredGame = evolution.filterGame(game(), sData().playerId);
       socket.emit("game loaded", {
         playerId: sData().playerId,
