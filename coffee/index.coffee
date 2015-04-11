@@ -16,14 +16,11 @@ createGame = ()->
 	game.firstPlayerId = 0
 	game.currentPlayerId = 0
 	game.phaseIndex = 0
-	game.deck = cards: []
-
-	#init deck wit cards
-	cards = game.deck.cards
+	game.deck = []
 
 	for card in game.ec.cards
 		for i in [1 .. card.number]
-			cards.push( card.traits )
+			game.deck.push( card.traits )
 
 	shuffle = (o) -> #v1.0
 		j = undefined
@@ -37,7 +34,7 @@ createGame = ()->
 			o[j] = x
 		return o
 
-	shuffle( cards )
+	shuffle( game.deck )
 
 	game.players = []
 	game.players.push( name: 'Edouard' )
@@ -46,7 +43,7 @@ createGame = ()->
 	for player in game.players
 		player.hand = []
 		for i in [1 .. 6]
-			player.hand.push(cards.pop())
+			player.hand.push(game.deck.pop())
 		player.species = []
 		player.connected = false
 		player.socketId =  null
@@ -71,7 +68,7 @@ io.on "connection", (socket) ->
 	game = ()->
 		return sData().game
 
-	ec = ()->		
+	ec = ()->
 		return game().ec
 
 	validState = (phase, playerId)->
@@ -115,7 +112,7 @@ io.on "connection", (socket) ->
 			return array[Math.floor(Math.random()*array.length)]
 
 		ec().clearExtinctedSpecies()
-		
+
 		nCardsRequired = 0
 
 		# compute how much cards each player needs
@@ -125,12 +122,12 @@ io.on "connection", (socket) ->
 
 		nCardsDealed = 0
 		currentPlayer = game.firstPlayerId
-		
+
 		# deal the new cards, one by one
-		while nCardsDealed<nCardsRequired and game.deck.cards.length>0
+		while nCardsDealed<nCardsRequired and game.deck.length>0
 			player = game.players[currentPlayer]
 			if player.nCardsRequired>0
-				player.hand.push( game.deck.cards.pop() )
+				player.hand.push( game.deck.pop() )
 				player.nCardsRequired--
 				nCardsDealed++
 			currentPlayer = (currentPlayer+1)%game.players.length
@@ -139,10 +136,10 @@ io.on "connection", (socket) ->
 		playersCardNumber = []
 		for player in game.players
 			playersCardNumber.push(player.hand.length)
-		
+
 		# send specific data (cards) to each player
 		for player in game.players
-			action = { hand: player.hand, playersCardNumber: playersCardNumber, cardNumberInDeck: game.deck.cards.length }
+			action = { hand: player.hand, playersCardNumber: playersCardNumber, cardNumberInDeck: game.deck.length }
 			socket.server.to(player.socketId).emit "phase evolution", action
 		return
 
@@ -176,9 +173,9 @@ io.on "connection", (socket) ->
 			trait = ec().card( action.selectedCard.cardIndex )[action.selectedCard.traitIndex]
 			action.trait = trait
 			ec().checkCompatibleEvolution( specie, trait )
-			
+
 			if specie.compatible
-				nextPhase = ec().addTrait(action.specieIndex, action.selectedCard)	
+				nextPhase = ec().addTrait(action.specieIndex, action.selectedCard)
 			else
 				action.message = "Error: cards are not compatible."
 				socket.emit "evolution error", action
@@ -247,7 +244,7 @@ io.on "connection", (socket) ->
 	socket.on "restart game", ()->
 		console.log "restart game"
 		createGame()
-		
+
 		socket.to(sData().room).emit "evolution connect"
 		socket.emit "evolution connect"
 		return

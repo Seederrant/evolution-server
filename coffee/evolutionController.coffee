@@ -4,18 +4,18 @@ module.exports = (io) ->
 		# currentPlayerId: 0
 		# phaseIndex: 0
 		# deck: { cards: [] }
-		# players: [ 
+		# players: [
 		# 	{
 		# 		connected: false
 		# 		socketId: null
-		# 		name: 'Edouard', 
+		# 		name: 'Edouard',
 		# 		hand: [],
 		# 		species: []
 		# 	},
 		# 	{
 		# 		connected: false
 		# 		socketId: null
-		# 		name: 'Jacob', 
+		# 		name: 'Jacob',
 		# 		hand: [],
 		# 		species: []
 		# 	},
@@ -24,7 +24,7 @@ module.exports = (io) ->
 			# 	name: 'Charlotte',
 			# 	hand: [ { shortName:"carnivorous" }, { shortName:"vivaporous" } ],
 			# 	species: [ [], [ { name:"tailLoss", shortName:"tailLoss" } ] ]
-			# } 
+			# }
 		# ]
 	]
 
@@ -35,14 +35,14 @@ module.exports = (io) ->
 		return i
 
 	filterGame: (game, id)->
-		copy = 
+		copy =
 			currentPlayerId: game.currentPlayerId
 			phaseIndex: game.phaseIndex
-			cardNumberInDeck: game.deck.number
+			cardNumberInDeck: game.deck.length
 			foodAmount: game.foodAmount
 			firstPlayerId: game.firstPlayerId
 			players: []
-			
+
 		for player, i in game.players
 			if id==i
 				copy.players.push(player)

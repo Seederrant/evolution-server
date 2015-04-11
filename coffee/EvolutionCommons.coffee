@@ -2,7 +2,7 @@ class EvolutionCommons
 
 	constructor: (@game)->
 		@phases = ["Evolution", "Food"]
-		@cards = [ 
+		@cards = [
 			#swimming
 			{
 				number: 8
@@ -219,7 +219,7 @@ class EvolutionCommons
 
 	currentPlayerId: ()->
 		return @game.currentPlayerId
-	
+
 	foodAmountRequired: (specie)->
 		cost = 1
 		for trait in specie.traits
@@ -228,7 +228,6 @@ class EvolutionCommons
 
 	isFed: (specie)->
 		return specie.foodEaten == @foodAmountRequired(specie)
-
 
 	checkCompatibleEvolution: (specie, card, addSpecie)->
 		specie.compatible = true
@@ -249,13 +248,13 @@ class EvolutionCommons
 
 		for trait in specie.traits
 			trait.compatible = false
-			if trait.shortName == 'grazing' and not trait.used
+			if trait.shortName == 'grazing' and not trait.used and @game.foodAmount > 0
 				trait.compatible = true
 				break
 			if trait.shortName == 'carnivorous' and not trait.used and not @isFed(specie)
 				trait.compatible = true
 				break
-			if trait.shortName == 'fatTissue' and not trait.used and @isFed(specie)
+			if trait.shortName == 'fatTissue' and not trait.used and @isFed(specie) and @game.foodAmount > 0
 				trait.compatible = true
 				break
 
@@ -302,7 +301,7 @@ class EvolutionCommons
 		player.species.push({ traits: [], foodEaten: 0} )
 		return
 
-	# called when player plays client side, and on server (on "end turn evolution"), but not when others clients receive result (not on "next player evolution") 
+	# called when player plays client side, and on server (on "end turn evolution"), but not when others clients receive result (not on "next player evolution")
 	addSpecie: (selectedCard)->
 		player = @currentPlayer()
 		card = player.hand.splice(selectedCard.cardIndex, 1)[0]
@@ -369,6 +368,7 @@ class EvolutionCommons
 			i = player.species.length-1
 			while i>=0
 				specie = player.species[i]
+				specie.foodEaten = 0
 				if specie.extinct
 					player.species.splice(i,1)
 				i--
