@@ -4,6 +4,8 @@
   "description": "Evolution server",
   "dependencies": {
     "express": "^4.6.1",
-    "socket.io": "^1.0.6"
+    "socket.io": "^1.0.6",
+    "grunt-contrib-copy": ">0.0.0",
+	"grunt-contrib-watch": "~0.6.1"
   }
 }
