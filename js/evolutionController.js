@@ -2,81 +2,7 @@
 (function() {
   module.exports = function(io) {
     return {
-      games: [
-        {
-          firstPlayerId: 0,
-          currentPlayerId: 0,
-          phaseIndex: 0,
-          deck: {
-            number: 40
-          },
-          players: [
-            {
-              connected: false,
-              name: 'Edouard',
-              hand: [
-                {
-                  shortName: "intellect"
-                }, {
-                  shortName: "carnivorous"
-                }, {
-                  shortName: "vivaporous"
-                }, {
-                  shortName: "tailLoss"
-                }
-              ],
-              species: [
-                {
-                  traits: [],
-                  foodEaten: 0
-                }, {
-                  traits: [
-                    {
-                      name: "intellect",
-                      shortName: "intellect"
-                    }, {
-                      name: "carnivorous",
-                      cost: 1,
-                      shortName: "carnivorous"
-                    }
-                  ],
-                  foodEaten: 0
-                }
-              ]
-            }, {
-              connected: false,
-              name: 'Jacob',
-              hand: [
-                {
-                  shortName: "intellect"
-                }, {
-                  shortName: "carnivorous"
-                }, {
-                  shortName: "tailLoss"
-                }
-              ],
-              species: [
-                {
-                  traits: [],
-                  foodEaten: 0
-                }, {
-                  traits: [
-                    {
-                      name: "tailLoss",
-                      shortName: "tailLoss"
-                    }, {
-                      name: "vivaporous",
-                      cost: 1,
-                      shortName: "vivaporous"
-                    }
-                  ],
-                  foodEaten: 0
-                }
-              ]
-            }
-          ]
-        }
-      ],
+      games: [],
       getNewPlayerId: function(gameId) {
         var i;
         i = 0;
@@ -90,7 +16,8 @@
         copy = {
           currentPlayerId: game.currentPlayerId,
           phaseIndex: game.phaseIndex,
-          deck: game.deck,
+          cardNumberInDeck: game.deck.number,
+          foodAmount: game.foodAmount,
           firstPlayerId: game.firstPlayerId,
           players: []
         };
