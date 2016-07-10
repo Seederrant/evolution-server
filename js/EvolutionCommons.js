@@ -121,9 +121,11 @@
       ];
       this.traits = {
         swimming: {
-          canBeEatenBy: function(specie) {
-            return specie.traits.swimming != null;
-          }
+          canBeEatenBy: (function(_this) {
+            return function(specie, carnivorousSpecie) {
+              return _this.hasTrait(carnivorousSpecie, "swimming");
+            };
+          })(this)
         },
         running: {
           attackSuccesful: function(specie) {
@@ -144,7 +146,13 @@
         poisonous: {},
         cooperation: {},
         burrowing: {},
-        camouflage: {},
+        camouflage: {
+          canBeEatenBy: (function(_this) {
+            return function(specie, carnivorousSpecie) {
+              return _this.hasTrait(carnivorousSpecie, "sharpVision");
+            };
+          })(this)
+        },
         sharpVision: {},
         carnivorous: {
           cost: 1
@@ -169,7 +177,11 @@
           cost: 1
         },
         ambushHunting: {},
-        flight: {}
+        flight: {
+          canBeEatenBy: function(specie, carnivorousSpecie) {
+            return carnivorousSpecie.traits.length < specie.traits.length;
+          }
+        }
       };
       return;
     }
@@ -191,13 +203,14 @@
     };
 
     EvolutionCommons.prototype.foodAmountRequired = function(specie) {
-      var cost, j, len, ref, trait;
+      var cost, j, len, ref, trait, traitCost;
       cost = 1;
       ref = specie.traits;
       for (j = 0, len = ref.length; j < len; j++) {
         trait = ref[j];
-        if (trait.cost != null) {
-          cost += trait.cost;
+        traitCost = this.traits[trait.shortName].cost;
+        if (traitCost != null) {
+          cost += traitCost;
         }
       }
       return cost;
@@ -212,7 +225,7 @@
     };
 
     EvolutionCommons.prototype.checkCompatibleFood = function(specie) {
-      var finished, j, len, ref, specieFed, trait;
+      var finished, hasCompatibleTrait, j, len, ref, specieFed, trait;
       specieFed = this.isFed(specie);
       if (!specieFed && this.game.foodAmount > 0) {
         specie.compatible = true;
@@ -220,24 +233,30 @@
         specie.compatible = false;
       }
       finished = specieFed || this.game.foodAmount === 0;
+      hasCompatibleTrait = false;
       ref = specie.traits;
       for (j = 0, len = ref.length; j < len; j++) {
         trait = ref[j];
         trait.compatible = false;
-        if (trait.shortName === 'grazing' && !trait.used && this.game.foodAmount > 0) {
-          trait.compatible = true;
-          break;
+        switch (trait.shortName) {
+          case 'grazing':
+            if (!trait.used && this.game.foodAmount > 0) {
+              trait.compatible = true;
+            }
+            break;
+          case 'carnivorous':
+            if (!trait.used && !this.isFed(specie)) {
+              trait.compatible = true;
+            }
+            break;
+          case 'fatTissue':
+            if (!trait.used && this.isFed(specie) && this.game.foodAmount > 0) {
+              trait.compatible = true;
+            }
         }
-        if (trait.shortName === 'carnivorous' && !trait.used && !this.isFed(specie)) {
-          trait.compatible = true;
-          break;
-        }
-        if (trait.shortName === 'fatTissue' && !trait.used && this.isFed(specie) && this.game.foodAmount > 0) {
-          trait.compatible = true;
-          break;
-        }
-        finished = finished && !trait.compatible;
+        hasCompatibleTrait = hasCompatibleTrait || trait.compatible;
       }
+      finished = finished && !hasCompatibleTrait;
       specie.finished = finished;
     };
 
@@ -297,6 +316,49 @@
       return this.nextPlayer();
     };
 
+    EvolutionCommons.prototype.setSpecieEatable = function(specie, carnivorousSpecie) {
+      var j, len, ref, trait, traitDescription;
+      ref = specie.traits;
+      for (j = 0, len = ref.length; j < len; j++) {
+        trait = ref[j];
+        traitDescription = this.traits[trait.shortName];
+        if ((traitDescription.canBeEatenBy != null) && !traitDescription.canBeEatenBy(specie, carnivorousSpecie)) {
+          specie.eatable = false;
+          return;
+        }
+      }
+      specie.eatable = true;
+    };
+
+    EvolutionCommons.prototype.checkEatable = function(playerId, carnivorousSpecie) {
+      var i, j, k, len, len1, player, ref, ref1, specie;
+      if (playerId == null) {
+        playerId = this.currentPlayerId();
+      }
+      ref = this.game.players;
+      for (i = j = 0, len = ref.length; j < len; i = ++j) {
+        player = ref[i];
+        if (i !== playerId) {
+          ref1 = player.species;
+          for (k = 0, len1 = ref1.length; k < len1; k++) {
+            specie = ref1[k];
+            this.setSpecieEatable(specie, carnivorousSpecie);
+          }
+        }
+      }
+    };
+
+    EvolutionCommons.prototype.useTrait = function(specieIndex, traitIndex, playerId) {
+      var specie, trait;
+      specie = this.specie(specieIndex, playerId);
+      trait = specie.traits[traitIndex];
+      switch (trait.shortName) {
+        case 'carnivorous':
+          trait.compatible = false;
+          this.checkEatable(specie);
+      }
+    };
+
     EvolutionCommons.prototype.createSpecie = function(player) {
       if (player == null) {
         player = this.currentPlayer();
@@ -316,6 +378,18 @@
         player.finished = true;
       }
       return this.nextPlayer();
+    };
+
+    EvolutionCommons.prototype.hasTrait = function(specie, traitShortName) {
+      var j, len, ref, trait;
+      ref = specie.traits;
+      for (j = 0, len = ref.length; j < len; j++) {
+        trait = ref[j];
+        if (trait.shortName === traitShortName) {
+          return true;
+        }
+      }
+      return false;
     };
 
     EvolutionCommons.prototype.addTrait = function(specieIndex, selectedCard) {

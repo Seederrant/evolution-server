@@ -168,8 +168,8 @@ class EvolutionCommons
 		#
 		@traits = {
 			swimming: {
-				canBeEatenBy: (specie)->
-					return specie.traits.swimming?
+				canBeEatenBy: (specie, carnivorousSpecie)=>
+					return @hasTrait(carnivorousSpecie, "swimming")
 			}
 			running: {
 				attackSuccesful: (specie)->
@@ -189,7 +189,10 @@ class EvolutionCommons
 			poisonous: {}
 			cooperation: {}
 			burrowing: {}
-			camouflage: {}
+			camouflage: {
+				canBeEatenBy: (specie, carnivorousSpecie)=>
+					return @hasTrait(carnivorousSpecie, "sharpVision")
+			}
 			sharpVision: {}
 			carnivorous: { cost: 1 }
 			fatTissue: {}
@@ -204,7 +207,10 @@ class EvolutionCommons
 			inkCloud: {}
 			vivaporous: { cost: 1 }
 			ambushHunting: {}
-			flight: {}
+			flight: {
+				canBeEatenBy: (specie, carnivorousSpecie)->
+					return carnivorousSpecie.traits.length < specie.traits.length
+			}
 		}
 		return
 
@@ -223,7 +229,8 @@ class EvolutionCommons
 	foodAmountRequired: (specie)->
 		cost = 1
 		for trait in specie.traits
-			if trait.cost? then cost += trait.cost
+			traitCost = @traits[trait.shortName].cost
+			if traitCost? then cost += traitCost
 		return cost
 
 	isFed: (specie)->
@@ -246,19 +253,24 @@ class EvolutionCommons
 
 		finished = specieFed or @game.foodAmount == 0
 
+		hasCompatibleTrait = false
 		for trait in specie.traits
 			trait.compatible = false
-			if trait.shortName == 'grazing' and not trait.used and @game.foodAmount > 0
-				trait.compatible = true
-				break
-			if trait.shortName == 'carnivorous' and not trait.used and not @isFed(specie)
-				trait.compatible = true
-				break
-			if trait.shortName == 'fatTissue' and not trait.used and @isFed(specie) and @game.foodAmount > 0
-				trait.compatible = true
-				break
 
-			finished = finished and not trait.compatible
+			switch trait.shortName
+				when 'grazing'
+					if not trait.used and @game.foodAmount > 0
+						trait.compatible = true
+				when 'carnivorous'
+					if not trait.used and not @isFed(specie)
+						trait.compatible = true
+				when 'fatTissue'
+					if not trait.used and @isFed(specie) and @game.foodAmount > 0
+						trait.compatible = true
+
+			hasCompatibleTrait = hasCompatibleTrait or trait.compatible
+
+		finished = finished and not hasCompatibleTrait
 
 		specie.finished = finished
 		return
@@ -296,6 +308,32 @@ class EvolutionCommons
 		@checkPlayerFinishedFood()
 		return @nextPlayer()
 
+	setSpecieEatable: (specie, carnivorousSpecie)->
+		for trait in specie.traits
+			traitDescription = @traits[trait.shortName]
+			if traitDescription.canBeEatenBy? and not traitDescription.canBeEatenBy(specie, carnivorousSpecie)
+				specie.eatable = false
+				return
+		specie.eatable = true
+		return
+
+	# TODO: the server does not need to update each specie, it only needs to check the specie being eated
+	checkEatable: (playerId = @currentPlayerId(), carnivorousSpecie)->
+		for player, i in @game.players
+			if i != playerId
+				for specie in player.species
+					@setSpecieEatable(specie, carnivorousSpecie)
+		return
+
+	useTrait: (specieIndex, traitIndex, playerId)->
+		specie = @specie(specieIndex, playerId)
+		trait = specie.traits[traitIndex]
+		switch trait.shortName
+			when 'carnivorous'
+				trait.compatible = false
+				@checkEatable(specie)
+		return
+
 	# --- Evolution phase -- #
 	createSpecie: (player = @currentPlayer())->
 		player.species.push({ traits: [], foodEaten: 0} )
@@ -309,6 +347,13 @@ class EvolutionCommons
 		if player.hand.length == 0
 			player.finished = true
 		return @nextPlayer()
+
+	# check if specie has the trait
+	hasTrait: (specie, traitShortName)->
+		for trait in specie.traits
+			if trait.shortName == traitShortName
+				return true
+		return false
 
 	# pass to next player
 	# play trait on specie
